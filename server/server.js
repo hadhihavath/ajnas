@@ -414,6 +414,44 @@ app.get('/api/download-all/:jobId', (req, res) => {
   archive.finalize();
 });
 
+/**
+ * Cookie Authentication Management (Bypass YouTube bot checks)
+ */
+app.get('/api/cookies/status', (req, res) => {
+  const cookiePath = ytService.getCookieFilePath();
+  res.json({
+    success: true,
+    hasCookies: !!cookiePath,
+    filename: cookiePath ? path.basename(cookiePath) : null
+  });
+});
+
+app.post('/api/cookies', (req, res) => {
+  try {
+    const { cookies } = req.body;
+    if (!cookies || typeof cookies !== 'string' || !cookies.trim()) {
+      return res.status(400).json({ success: false, error: 'Cookie content is empty.' });
+    }
+    const targetPath = path.join(__dirname, '..', 'cookies.txt');
+    fs.writeFileSync(targetPath, cookies.trim(), 'utf8');
+    res.json({ success: true, message: 'cookies.txt successfully saved on server.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to write cookies.txt: ' + err.message });
+  }
+});
+
+app.delete('/api/cookies', (req, res) => {
+  try {
+    const rootCookie = path.join(__dirname, '..', 'cookies.txt');
+    if (fs.existsSync(rootCookie)) {
+      fs.unlinkSync(rootCookie);
+    }
+    res.json({ success: true, message: 'cookies.txt removed from server.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Start Express Server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n======================================================`);

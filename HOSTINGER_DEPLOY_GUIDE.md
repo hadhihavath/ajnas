@@ -142,3 +142,32 @@ To connect securely from `https://hadhihavath.github.io` without browser "Mixed 
    - Paste a YouTube URL (or click sample chip "Me at the zoo").
    - Click "Inspect Video".
    - Split parts and enjoy downloading!
+
+---
+
+## 🍪 Part 3: YouTube Bot Check ("Sign in to confirm you're not a bot")
+
+### Why does this happen?
+YouTube sometimes flags cloud datacenter IPs (like Hostinger, Hetzner, AWS) with bot challenges when requesting video streams.
+
+### Solution 1: Automated Mobile Player Fallback (Built-in)
+The backend is already configured with `--extractor-args "youtube:player_client=android,ios,mweb,web"`. This automatically routes requests through YouTube's mobile API (Android & iOS InnerTube), which bypasses desktop bot verification challenges without requiring cookies.
+
+### Solution 2: Easy Cookies Authentication (100% Reliable)
+If YouTube requires authentication for a specific video on your Hostinger VPS, you can provide a `cookies.txt` file in seconds:
+
+#### Method A: Via the Web UI (Easiest)
+1. Install a browser extension such as **"Get cookies.txt LOCALLY"** (available on Chrome Web Store & Firefox Add-ons).
+2. Visit [YouTube.com](https://www.youtube.com) while signed into your account.
+3. Click the extension icon and copy or export your cookies text.
+4. On your web app (`https://hadhihavath.github.io`), click **"Hostinger Backend"** at the top.
+5. Paste the cookie content into the **"YouTube Cookies (Bot-Check Bypass)"** box and click **"Save Cookies to Server"**.
+6. The badge will immediately switch to **"🍪 Cookies Active"**!
+
+#### Method B: Direct File on VPS
+Drop your `cookies.txt` file directly into your server directory:
+```bash
+nano /var/www/youtube-downloader/cookies.txt
+# Paste your exported cookies and save (Ctrl+O, Enter, Ctrl+X)
+```
+The backend automatically detects `cookies.txt` on startup and attaches `--cookies cookies.txt` to all `yt-dlp` requests.

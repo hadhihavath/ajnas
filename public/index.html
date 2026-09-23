@@ -311,6 +311,27 @@
           <button id="btnResetServerUrl" type="button" class="btn-part-preview">Reset Local</button>
           <button id="btnSaveServerUrl" type="button" class="btn-part-download" style="padding: 10px 20px;">Save & Connect</button>
         </div>
+
+        <!-- YouTube Cookies & Bot Check Bypass -->
+        <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-subtle);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label for="cookieTextInput" style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">YouTube Cookies (Bot-Check Bypass)</label>
+            <span id="cookieStatusBadge" class="brand-badge" style="margin-bottom: 0; padding: 2px 10px; font-size: 0.72rem;">Checking...</span>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 10px;">
+            Mobile player clients are active by default. If a video ever prompts <em>"Sign in to confirm you’re not a bot"</em>, paste your Netscape <code>cookies.txt</code> below:
+          </p>
+          <textarea 
+            id="cookieTextInput" 
+            class="styled-number-input" 
+            style="width: 100%; height: 90px; font-family: monospace; font-size: 0.76rem; resize: vertical; margin-bottom: 10px;"
+            placeholder="# Netscape HTTP Cookie File&#10;.youtube.com   TRUE   /   FALSE   1750000000   ..."
+          ></textarea>
+          <div style="display: flex; gap: 8px; justify-content: flex-end;">
+            <button id="btnClearCookies" type="button" class="btn-part-preview" style="font-size: 0.8rem; padding: 8px 14px;">Clear Cookies</button>
+            <button id="btnSaveCookies" type="button" class="btn-part-download" style="font-size: 0.8rem; padding: 8px 16px;">Save Cookies to Server</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

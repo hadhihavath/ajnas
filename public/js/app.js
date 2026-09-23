@@ -71,6 +71,11 @@ const el = {
   btnSaveServerUrl: document.getElementById('btnSaveServerUrl'),
   btnResetServerUrl: document.getElementById('btnResetServerUrl'),
 
+  cookieStatusBadge: document.getElementById('cookieStatusBadge'),
+  cookieTextInput: document.getElementById('cookieTextInput'),
+  btnSaveCookies: document.getElementById('btnSaveCookies'),
+  btnClearCookies: document.getElementById('btnClearCookies'),
+
   toastContainer: document.getElementById('toastContainer'),
 };
 
@@ -676,10 +681,33 @@ function initEvents() {
 
   updateServerBadge();
 
+  async function checkCookieStatus() {
+    if (!el.cookieStatusBadge) return;
+    try {
+      const url = window.CONFIG ? window.CONFIG.getUrl('/api/cookies/status') : '/api/cookies/status';
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.hasCookies) {
+        el.cookieStatusBadge.textContent = '🍪 Cookies Active';
+        el.cookieStatusBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+        el.cookieStatusBadge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        el.cookieStatusBadge.style.color = '#6ee7b7';
+      } else {
+        el.cookieStatusBadge.textContent = '⚡ Mobile Client Active';
+        el.cookieStatusBadge.style.background = 'rgba(99, 102, 241, 0.12)';
+        el.cookieStatusBadge.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+        el.cookieStatusBadge.style.color = '#a5b4fc';
+      }
+    } catch (_) {
+      el.cookieStatusBadge.textContent = 'Status Unavailable';
+    }
+  }
+
   if (el.btnServerConfig) {
     el.btnServerConfig.addEventListener('click', () => {
       el.backendUrlInput.value = window.CONFIG ? window.CONFIG.API_BASE_URL : '';
       el.serverModal.classList.add('active');
+      checkCookieStatus();
     });
   }
 
@@ -702,6 +730,7 @@ function initEvents() {
         window.CONFIG.setApiBaseUrl(val);
       }
       updateServerBadge();
+      checkCookieStatus();
       el.serverModal.classList.remove('active');
       showToast(val ? `Backend configured: ${val}` : 'Reset to default backend', 'success');
     });
@@ -714,8 +743,51 @@ function initEvents() {
       }
       el.backendUrlInput.value = '';
       updateServerBadge();
+      checkCookieStatus();
       el.serverModal.classList.remove('active');
       showToast('Backend reset to default origin', 'info');
+    });
+  }
+
+  if (el.btnSaveCookies) {
+    el.btnSaveCookies.addEventListener('click', async () => {
+      const text = el.cookieTextInput.value.trim();
+      if (!text) {
+        showToast('Please paste cookies content first.', 'error');
+        return;
+      }
+      try {
+        const url = window.CONFIG ? window.CONFIG.getUrl('/api/cookies') : '/api/cookies';
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cookies: text })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('✅ Cookies successfully saved on server!', 'success');
+          el.cookieTextInput.value = '';
+          checkCookieStatus();
+        } else {
+          showToast(data.error || 'Failed to save cookies.', 'error');
+        }
+      } catch (err) {
+        showToast('Failed to save cookies: ' + err.message, 'error');
+      }
+    });
+  }
+
+  if (el.btnClearCookies) {
+    el.btnClearCookies.addEventListener('click', async () => {
+      try {
+        const url = window.CONFIG ? window.CONFIG.getUrl('/api/cookies') : '/api/cookies';
+        const res = await fetch(url, { method: 'DELETE' });
+        const data = await res.json();
+        showToast('Cookies cleared.', 'info');
+        checkCookieStatus();
+      } catch (err) {
+        showToast('Failed to clear cookies: ' + err.message, 'error');
+      }
     });
   }
 

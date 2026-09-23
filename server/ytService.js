@@ -46,6 +46,45 @@ const FFMPEG_DIR = process.env.FFMPEG_DIR ||
     ? path.join(__dirname, '..', 'bin') 
     : (staticFfmpegPath ? path.dirname(staticFfmpegPath) : ''));
 
+function getCookieFilePath() {
+  if (process.env.YT_COOKIES_PATH && fs.existsSync(process.env.YT_COOKIES_PATH)) {
+    return process.env.YT_COOKIES_PATH;
+  }
+  const rootCookie = path.join(__dirname, '..', 'cookies.txt');
+  if (fs.existsSync(rootCookie)) return rootCookie;
+  const binCookie = path.join(__dirname, '..', 'bin', 'cookies.txt');
+  if (fs.existsSync(binCookie)) return binCookie;
+  const configCookie = path.join(__dirname, '..', 'config', 'cookies.txt');
+  if (fs.existsSync(configCookie)) return configCookie;
+  return null;
+}
+
+function getYtDlpBaseArgs() {
+  const base = [
+    '--no-warnings',
+    '--no-playlist',
+    '--js-runtimes', 'node',
+    // Mobile player clients (Android, iOS) bypass YouTube's datacenter IP bot detection
+    '--extractor-args', 'youtube:player_client=android,ios,mweb,web'
+  ];
+
+  const cookiePath = getCookieFilePath();
+  if (cookiePath) {
+    base.push('--cookies', cookiePath);
+  }
+
+  return base;
+}
+
+function cleanYtDlpError(errOutput) {
+  if (!errOutput) return 'Failed to process video with YouTube.';
+  const str = String(errOutput);
+  if (str.includes("Sign in to confirm you’re not a bot") || str.includes("Sign in to confirm you're not a bot")) {
+    return "YouTube Bot Verification: YouTube requires authentication for this video from the server IP. Please upload or paste a cookies.txt file in Server Settings (or check our guide in Settings).";
+  }
+  return str;
+}
+
 /**
  * Validate YouTube URL
  */
@@ -82,10 +121,8 @@ function getVideoInfo(url) {
 
     const args = [
       '--dump-single-json',
-      '--no-warnings',
-      '--no-playlist',
       '--skip-download',
-      '--js-runtimes', 'node',
+      ...getYtDlpBaseArgs(),
       url.trim()
     ];
 
@@ -119,7 +156,7 @@ function getVideoInfo(url) {
             }
           }
           console.error('[yt-dlp error]', stderrData);
-          return reject(new Error(stderrData || 'Failed to extract video information from YouTube.'));
+          return reject(new Error(cleanYtDlpError(stderrData)));
         }
 
         try {
@@ -199,14 +236,12 @@ function getVideoInfo(url) {
 function downloadSource({ url, quality, outputPath, onProgress }) {
   return new Promise((resolve, reject) => {
     let args = [
-      '--no-playlist',
       '--newline',
-      '--no-warnings',
-      '--js-runtimes', 'node',
       '--no-part',
       '--no-mtime',
       '--file-access-retries', '10',
-      '--retry-sleep', 'file_access:1'
+      '--retry-sleep', 'file_access:1',
+      ...getYtDlpBaseArgs()
     ];
 
     if (FFMPEG_DIR) {
@@ -344,7 +379,7 @@ function downloadSource({ url, quality, outputPath, onProgress }) {
       }
 
       console.error('[yt-dlp download error]', errorOutput);
-      reject(new Error(`Download failed: ${errorOutput || 'Unknown yt-dlp error'}`));
+      reject(new Error(`Download failed: ${cleanYtDlpError(errorOutput)}`));
     });
 
     child.on('error', (err) => {
@@ -357,5 +392,6 @@ module.exports = {
   isValidYouTubeUrl,
   formatDuration,
   getVideoInfo,
-  downloadSource
+  downloadSource,
+  getCookieFilePath
 };
