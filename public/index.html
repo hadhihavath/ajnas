@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Split Downloader — Split Videos to Custom Parts</title>
+  <meta name="description" content="Download YouTube videos split into custom duration chunks, equal parts, or trimmed segments. Fast, HD quality, and one-click ZIP download.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Hero Header -->
+    <header class="app-header">
+      <div style="display: flex; justify-content: center; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
+        <div class="brand-badge" style="margin-bottom: 0;">
+          <span class="pulse-dot"></span>
+          <span>High-Speed Video Slicer</span>
+        </div>
+        <button id="btnServerConfig" class="server-config-btn" type="button" title="Configure Hostinger Backend API URL">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span id="serverStatusText">Hostinger Backend</span>
+        </button>
+      </div>
+      <h1 class="main-title">
+        YouTube <span class="gradient-text">Split Downloader</span>
+      </h1>
+      <p class="sub-title">
+        Download YouTube videos automatically sliced into parts of any length you choose. Perfect for TikToks, Shorts, chapters, or playlists.
+      </p>
+    </header>
+
+    <!-- URL Input Section -->
+    <section class="glass-panel search-card">
+      <div class="input-group">
+        <div class="input-icon-wrapper">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+        </div>
+        <input 
+          type="text" 
+          id="youtubeUrl" 
+          class="url-input" 
+          placeholder="Paste any YouTube video or Shorts link (e.g. https://www.youtube.com/watch?v=...)" 
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <button id="btnPaste" class="paste-btn" type="button" title="Paste from clipboard">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+          </svg>
+          Paste
+        </button>
+        <button id="btnFetchInfo" class="btn-fetch" type="button">
+          <span class="btn-text">Inspect Video</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Quick sample test links -->
+      <div class="quick-samples">
+        <span>Try sample:</span>
+        <button class="sample-chip" data-url="https://www.youtube.com/watch?v=jNQXAC9IVRw">Me at the zoo (19s Test)</button>
+        <button class="sample-chip" data-url="https://www.youtube.com/watch?v=aqz-KE-bpKQ">Big Buck Bunny (Short Film)</button>
+        <button class="sample-chip" data-url="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Rick Astley (Music)</button>
+      </div>
+    </section>
+
+    <!-- Video Info Card (Loaded State) -->
+    <section id="videoInfoCard" class="glass-panel video-card" style="display: none;">
+      <div class="video-thumb-container">
+        <img id="videoThumb" class="video-thumb" src="" alt="Video thumbnail">
+        <span id="videoDuration" class="video-duration-badge">00:00</span>
+      </div>
+      <div class="video-details">
+        <h2 id="videoTitle" class="video-title">Video Title</h2>
+        <div class="video-meta-row">
+          <div class="meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span id="videoAuthor">Channel Name</span>
+          </div>
+          <div class="meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="videoLengthText">00:00</span>
+          </div>
+        </div>
+
+        <!-- Quality Selector -->
+        <div class="quality-section">
+          <div class="quality-label">Choose Quality / Format</div>
+          <div id="qualityPills" class="quality-pills">
+            <!-- Dynamic pills inserted via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Split Configuration Card -->
+    <section id="splitConfigCard" class="glass-panel split-config-card" style="display: none;">
+      <div class="section-heading">
+        <h2>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="6" cy="6" r="3"></circle>
+            <circle cx="6" cy="18" r="3"></circle>
+            <line x1="20" y1="4" x2="8.12" y2="15.88"></line>
+            <line x1="14.47" y1="14.48" x2="20" y2="20"></line>
+            <line x1="8.12" y1="8.12" x2="12" y2="12"></line>
+          </svg>
+          Configure Split Parts
+        </h2>
+      </div>
+
+      <!-- Mode Selector Tabs -->
+      <div class="mode-tabs">
+        <button type="button" class="mode-tab active" data-mode="duration">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          Fixed Duration (e.g. 60s)
+        </button>
+        <button type="button" class="mode-tab" data-mode="parts">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="18" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="18" rx="1"></rect>
+          </svg>
+          Equal Parts (e.g. 4 parts)
+        </button>
+      </div>
+
+      <!-- Tab Content: Fixed Duration -->
+      <div id="tabContentDuration" class="tab-content">
+        <!-- Quick Presets -->
+        <div class="preset-durations">
+          <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Presets:</span>
+          <button type="button" class="preset-chip" data-seconds="30">30s (Shorts/Reels)</button>
+          <button type="button" class="preset-chip active" data-seconds="60">60s (1 min)</button>
+          <button type="button" class="preset-chip" data-seconds="120">2 mins</button>
+          <button type="button" class="preset-chip" data-seconds="300">5 mins</button>
+          <button type="button" class="preset-chip" data-seconds="600">10 mins</button>
+        </div>
+
+        <div class="split-input-row">
+          <div class="input-field-group">
+            <label for="splitMinutes">Part Length - Minutes</label>
+            <input type="number" id="splitMinutes" class="styled-number-input" min="0" max="600" value="1">
+          </div>
+          <div class="input-field-group">
+            <label for="splitSeconds">Part Length - Seconds</label>
+            <input type="number" id="splitSeconds" class="styled-number-input" min="0" max="59" value="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Equal Parts -->
+      <div id="tabContentParts" class="tab-content" style="display: none;">
+        <div class="split-input-row">
+          <div class="input-field-group">
+            <label for="numPartsInput">Divide into how many equal parts?</label>
+            <input type="number" id="numPartsInput" class="styled-number-input" min="2" max="50" value="3">
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Timeline Visualizer -->
+      <div class="timeline-container">
+        <div class="timeline-header">
+          <div class="timeline-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="4" y1="6" x2="20" y2="6"></line>
+              <line x1="4" y1="12" x2="20" y2="12"></line>
+              <line x1="4" y1="18" x2="20" y2="18"></line>
+            </svg>
+            Live Part Breakdown
+          </div>
+          <div id="timelineStats" class="timeline-stats">0 Parts</div>
+        </div>
+
+        <div class="timeline-track-wrapper">
+          <div id="timelineTrack" class="timeline-track">
+            <!-- Dynamic colored segments rendered here -->
+          </div>
+          <div class="timeline-time-labels">
+            <span id="timelineStartLabel">00:00</span>
+            <span id="timelineEndLabel">00:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button id="btnStartSplit" class="btn-process" type="button">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>Download & Split Video</span>
+      </button>
+    </section>
+
+    <!-- Progress Tracker Card -->
+    <section id="progressCard" class="glass-panel progress-card" style="display: none;">
+      <div class="progress-header">
+        <div class="progress-stage-title">
+          <span class="spinner"></span>
+          <span id="progressMessage">Preparing download...</span>
+        </div>
+        <div id="progressPercent" class="progress-percent-val">0%</div>
+      </div>
+
+      <div class="progress-bar-bg">
+        <div id="progressBarFill" class="progress-bar-fill"></div>
+      </div>
+
+      <div class="progress-meta-info">
+        <span id="progressSubDetail">Connecting to video stream...</span>
+        <span id="progressSpeedEta"></span>
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="resultsCard" class="glass-panel results-card" style="display: none;">
+      <div class="results-header-actions">
+        <div class="results-title">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-emerald)" stroke-width="2.5">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <span id="resultsCountTitle">Split Parts Ready</span>
+        </div>
+        <a id="btnDownloadZip" href="#" class="btn-zip-download" download>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="8 17 12 21 16 17"></polyline>
+            <line x1="12" y1="12" x2="12" y2="21"></line>
+            <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"></path>
+          </svg>
+          Download All Parts (.ZIP)
+        </a>
+      </div>
+
+      <!-- Parts Grid -->
+      <div id="partsGrid" class="parts-grid">
+        <!-- Part cards dynamically rendered here -->
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Video Preview Modal -->
+  <div id="previewModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalPartTitle" class="modal-title">Preview Part</h3>
+        <button id="btnModalClose" class="modal-close-btn" type="button">&times;</button>
+      </div>
+      <div class="modal-player-container">
+        <video id="modalVideoPlayer" controls playsinline></video>
+        <audio id="modalAudioPlayer" controls style="display: none;"></audio>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backend Server Settings Modal (for hadhihavath.github.io) -->
+  <div id="serverModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 520px; padding: 24px;">
+      <div class="modal-header" style="padding: 0 0 16px; border-bottom: 1px solid var(--border-subtle);">
+        <h3 class="modal-title">Hostinger Server Connection</h3>
+        <button id="btnServerModalClose" class="modal-close-btn" type="button">&times;</button>
+      </div>
+      <div style="margin-top: 18px;">
+        <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px;">
+          When using <strong>hadhihavath.github.io</strong>, requests are routed to your Hostinger VPS backend running Docker / Node.js.
+        </p>
+        <label for="backendUrlInput" style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Hostinger Backend URL</label>
+        <input 
+          type="text" 
+          id="backendUrlInput" 
+          class="styled-number-input" 
+          style="width: 100%; margin-top: 6px; margin-bottom: 16px; font-size: 0.92rem;" 
+          placeholder="e.g. http://123.45.67.89:3000 or https://api.yourdomain.com"
+        >
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button id="btnResetServerUrl" type="button" class="btn-part-preview">Reset Local</button>
+          <button id="btnSaveServerUrl" type="button" class="btn-part-download" style="padding: 10px 20px;">Save & Connect</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/timeline.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

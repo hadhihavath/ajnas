@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Local Windows Binaries (Exceeds GitHub 100MB limit; Docker installs Linux versions directly)
+bin/*.exe
+
+# Temporary downloads and processed files
+downloads/*
+!downloads/.gitkeep
+
+# System & Environment
+.env
+.DS_Store
+Thumbs.db
+*.log
+
+# Test files
+test_*
