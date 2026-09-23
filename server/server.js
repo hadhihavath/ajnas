@@ -23,6 +23,8 @@ const PORT = process.env.PORT || 3000;
 // Configurable CORS origins (Supports hadhihavath.github.io, local dev, and custom domains)
 const allowedOrigins = [
   'https://hadhihavath.github.io',
+  'https://ajnas.faredix.com',
+  'http://ajnas.faredix.com',
   'https://seashell-okapi-543184.hostingersite.com',
   'http://localhost:3000',
   'http://localhost:5173',

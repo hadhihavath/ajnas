@@ -5,7 +5,7 @@
 
 const CONFIG = {
   // Point to your actual Hostinger backend deployment URL
-  DEFAULT_HOSTINGER_API: 'https://seashell-okapi-543184.hostingersite.com',
+  DEFAULT_HOSTINGER_API: 'https://ajnas.faredix.com',
 
   get isGitHubPages() {
     return window.location.hostname.endsWith('github.io');
