@@ -90,10 +90,15 @@ function calculateSegments({ totalDuration, mode, partDuration, numParts, custom
 }
 
 const isWin = process.platform === 'win32';
+let staticFfmpegPath = null;
+try {
+  staticFfmpegPath = require('ffmpeg-static');
+} catch (_) {}
+
 const FFMPEG_PATH = process.env.FFMPEG_PATH || 
   (isWin && fs.existsSync(path.join(__dirname, '..', 'bin', 'ffmpeg.exe'))
     ? path.join(__dirname, '..', 'bin', 'ffmpeg.exe')
-    : 'ffmpeg');
+    : (staticFfmpegPath || 'ffmpeg'));
 
 /**
  * Execute an ffmpeg command as a promise

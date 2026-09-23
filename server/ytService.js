@@ -3,15 +3,23 @@ const path = require('path');
 const fs = require('fs');
 
 const isWin = process.platform === 'win32';
+const winBin = path.join(__dirname, '..', 'bin', 'yt-dlp.exe');
+const linuxBin = path.join(__dirname, '..', 'bin', 'yt-dlp');
+
+let staticFfmpegPath = null;
+try {
+  staticFfmpegPath = require('ffmpeg-static');
+} catch (_) {}
+
 const YT_DLP_PATH = process.env.YT_DLP_PATH || 
-  (isWin && fs.existsSync(path.join(__dirname, '..', 'bin', 'yt-dlp.exe')) 
-    ? path.join(__dirname, '..', 'bin', 'yt-dlp.exe') 
-    : 'yt-dlp');
+  (isWin && fs.existsSync(winBin) 
+    ? winBin 
+    : (fs.existsSync(linuxBin) ? linuxBin : 'yt-dlp'));
 
 const FFMPEG_DIR = process.env.FFMPEG_DIR || 
   (isWin && fs.existsSync(path.join(__dirname, '..', 'bin')) 
     ? path.join(__dirname, '..', 'bin') 
-    : '');
+    : (staticFfmpegPath ? path.dirname(staticFfmpegPath) : ''));
 
 /**
  * Validate YouTube URL
