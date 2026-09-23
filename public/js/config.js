@@ -4,9 +4,8 @@
  */
 
 const CONFIG = {
-  // If served from GitHub Pages (hadhihavath.github.io), point to your Hostinger server backend
-  // When running locally or on the same server, empty string uses relative paths (e.g. /api/...)
-  DEFAULT_HOSTINGER_API: 'https://api.yourhostingerdomain.com',
+  // Point to your actual Hostinger backend deployment URL
+  DEFAULT_HOSTINGER_API: 'https://seashell-okapi-543184.hostingersite.com',
 
   get isGitHubPages() {
     return window.location.hostname.endsWith('github.io');

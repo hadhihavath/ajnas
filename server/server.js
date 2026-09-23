@@ -9,12 +9,21 @@ const ytService = require('./ytService');
 const ffmpegService = require('./ffmpegService');
 const cleanupService = require('./cleanupService');
 
+const LOCAL_TMP = path.join(__dirname, '..', 'downloads', 'tmp');
+if (!fs.existsSync(LOCAL_TMP)) {
+  try { fs.mkdirSync(LOCAL_TMP, { recursive: true }); } catch (_) {}
+}
+process.env.TMPDIR = LOCAL_TMP;
+process.env.TEMP = LOCAL_TMP;
+process.env.TMP = LOCAL_TMP;
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configurable CORS origins (Supports hadhihavath.github.io, local dev, and custom domains)
 const allowedOrigins = [
   'https://hadhihavath.github.io',
+  'https://seashell-okapi-543184.hostingersite.com',
   'http://localhost:3000',
   'http://localhost:5173',
   'http://127.0.0.1:3000'
@@ -406,8 +415,8 @@ app.get('/api/download-all/:jobId', (req, res) => {
 });
 
 // Start Express Server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n======================================================`);
-  console.log(`⚡ YouTube Split Downloader running at http://localhost:${PORT}`);
+  console.log(`⚡ YouTube Split Downloader running at http://0.0.0.0:${PORT}`);
   console.log(`======================================================\n`);
 });

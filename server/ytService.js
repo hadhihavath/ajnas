@@ -11,6 +11,18 @@ try {
   staticFfmpegPath = require('ffmpeg-static');
 } catch (_) {}
 
+const LOCAL_TMP = path.join(__dirname, '..', 'downloads', 'tmp');
+if (!fs.existsSync(LOCAL_TMP)) {
+  try {
+    fs.mkdirSync(LOCAL_TMP, { recursive: true });
+  } catch (_) {}
+}
+process.env.TMPDIR = LOCAL_TMP;
+process.env.TEMP = LOCAL_TMP;
+process.env.TMP = LOCAL_TMP;
+
+const pyBin = path.join(__dirname, '..', 'bin', 'yt-dlp.py');
+
 function resolveYtDlp() {
   if (process.env.YT_DLP_PATH && fs.existsSync(process.env.YT_DLP_PATH)) {
     return process.env.YT_DLP_PATH;
@@ -60,7 +72,7 @@ function formatDuration(seconds) {
 }
 
 /**
- * Extract video info using yt-dlp
+ * Extract video info using yt-dlp with automatic fallback
  */
 function getVideoInfo(url) {
   return new Promise((resolve, reject) => {
@@ -77,90 +89,107 @@ function getVideoInfo(url) {
       url.trim()
     ];
 
-    const executable = resolveYtDlp();
-    const child = spawn(executable, args);
-    let stdoutData = '';
-    let stderrData = '';
+    const env = {
+      ...process.env,
+      TMPDIR: LOCAL_TMP,
+      TEMP: LOCAL_TMP,
+      TMP: LOCAL_TMP
+    };
 
-    child.stdout.on('data', (chunk) => {
-      stdoutData += chunk.toString();
-    });
+    function tryExtract(cmd, cmdArgs, allowFallback = true) {
+      const child = spawn(cmd, cmdArgs, { env });
+      let stdoutData = '';
+      let stderrData = '';
 
-    child.stderr.on('data', (chunk) => {
-      stderrData += chunk.toString();
-    });
+      child.stdout.on('data', (chunk) => {
+        stdoutData += chunk.toString();
+      });
 
-    child.on('close', (code) => {
-      if (code !== 0) {
-        console.error('[yt-dlp error]', stderrData);
-        return reject(new Error(stderrData || 'Failed to extract video information from YouTube.'));
-      }
+      child.stderr.on('data', (chunk) => {
+        stderrData += chunk.toString();
+      });
 
-      try {
-        const info = JSON.parse(stdoutData);
-
-        // Find available video heights
-        const availableHeights = new Set();
-        if (Array.isArray(info.formats)) {
-          for (const f of info.formats) {
-            if (f.vcodec && f.vcodec !== 'none' && f.height) {
-              availableHeights.add(f.height);
+      child.on('close', (code) => {
+        if (code !== 0) {
+          // Check for shared library / mmap / noexec errors on Linux
+          if (allowFallback && (stderrData.includes('failed to map segment') || stderrData.includes('libz.so') || code === 126 || code === 127)) {
+            console.warn('[ytService] Binary mmap failed. Falling back to python3 with pure python zipapp...');
+            if (fs.existsSync(pyBin)) {
+              return tryExtract('python3', [pyBin, ...args], false);
             }
           }
+          console.error('[yt-dlp error]', stderrData);
+          return reject(new Error(stderrData || 'Failed to extract video information from YouTube.'));
         }
 
-        const standardHeights = [1080, 720, 480, 360];
-        const qualities = [];
+        try {
+          const info = JSON.parse(stdoutData);
 
-        // Add standard resolutions if available or equal/lower than max height
-        const maxHeight = Math.max(...Array.from(availableHeights), 720);
-        for (const h of standardHeights) {
-          if (maxHeight >= h || availableHeights.has(h)) {
-            qualities.push({
-              id: `${h}p`,
-              label: `${h}p (${h >= 720 ? 'HD' : 'SD'})`,
-              height: h
-            });
+          const availableHeights = new Set();
+          if (Array.isArray(info.formats)) {
+            for (const f of info.formats) {
+              if (f.vcodec && f.vcodec !== 'none' && f.height) {
+                availableHeights.add(f.height);
+              }
+            }
           }
+
+          const standardHeights = [1080, 720, 480, 360];
+          const qualities = [];
+
+          const maxHeight = Math.max(...Array.from(availableHeights), 720);
+          for (const h of standardHeights) {
+            if (maxHeight >= h || availableHeights.has(h)) {
+              qualities.push({
+                id: `${h}p`,
+                label: `${h}p (${h >= 720 ? 'HD' : 'SD'})`,
+                height: h
+              });
+            }
+          }
+
+          if (qualities.length === 0) {
+            qualities.push({ id: 'best', label: 'Best Quality (Auto)', height: maxHeight });
+          }
+
+          qualities.push({
+            id: 'audio',
+            label: 'Audio Only (MP3)',
+            height: 0
+          });
+
+          let thumbnail = info.thumbnail;
+          if (Array.isArray(info.thumbnails) && info.thumbnails.length > 0) {
+            const sortedThumbs = [...info.thumbnails].sort((a, b) => (b.width || 0) - (a.width || 0));
+            thumbnail = sortedThumbs[0].url;
+          }
+
+          resolve({
+            id: info.id,
+            title: info.title || 'YouTube Video',
+            author: info.uploader || info.channel || 'Unknown Creator',
+            duration: info.duration || 0,
+            formattedDuration: formatDuration(info.duration || 0),
+            thumbnail,
+            url: info.webpage_url || url,
+            qualities
+          });
+        } catch (err) {
+          console.error('[yt-dlp parse error]', err);
+          reject(new Error('Failed to parse video metadata.'));
         }
+      });
 
-        if (qualities.length === 0) {
-          qualities.push({ id: 'best', label: 'Best Quality (Auto)', height: maxHeight });
+      child.on('error', (err) => {
+        if (allowFallback && fs.existsSync(pyBin)) {
+          console.warn(`[ytService] Failed spawning ${cmd} (${err.message}). Trying python3 fallback...`);
+          return tryExtract('python3', [pyBin, ...args], false);
         }
+        reject(new Error(`Failed to start yt-dlp: ${err.message}`));
+      });
+    }
 
-        // Always offer audio-only (MP3)
-        qualities.push({
-          id: 'audio',
-          label: 'Audio Only (MP3)',
-          height: 0
-        });
-
-        // Pick best thumbnail
-        let thumbnail = info.thumbnail;
-        if (Array.isArray(info.thumbnails) && info.thumbnails.length > 0) {
-          const sortedThumbs = [...info.thumbnails].sort((a, b) => (b.width || 0) - (a.width || 0));
-          thumbnail = sortedThumbs[0].url;
-        }
-
-        resolve({
-          id: info.id,
-          title: info.title || 'YouTube Video',
-          author: info.uploader || info.channel || 'Unknown Creator',
-          duration: info.duration || 0,
-          formattedDuration: formatDuration(info.duration || 0),
-          thumbnail,
-          url: info.webpage_url || url,
-          qualities
-        });
-      } catch (err) {
-        console.error('[yt-dlp parse error]', err);
-        reject(new Error('Failed to parse video metadata.'));
-      }
-    });
-
-    child.on('error', (err) => {
-      reject(new Error(`Failed to start yt-dlp: ${err.message}`));
-    });
+    tryExtract(resolveYtDlp(), args, true);
   });
 }
 
@@ -216,8 +245,15 @@ function downloadSource({ url, quality, outputPath, onProgress }) {
       );
     }
 
+    const env = {
+      ...process.env,
+      TMPDIR: LOCAL_TMP,
+      TEMP: LOCAL_TMP,
+      TMP: LOCAL_TMP
+    };
+
     const executable = resolveYtDlp();
-    const child = spawn(executable, args);
+    const child = spawn(executable, args, { env });
     let lastPercent = 0;
     let errorOutput = '';
 
