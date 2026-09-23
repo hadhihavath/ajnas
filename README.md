@@ -1,8 +1,6 @@
-# YouTube Split Downloader ✂️🎬
+# YouTube Splitter — Custom made for Mr. Ajnas ✂️🎬
 
-A modern, high-performance web application designed to download YouTube videos and split them into custom-length parts, chapters, or equal segments.
-
-![YouTube Split Downloader](public/css/style.css)
+A modern, high-performance web application custom made for Mr. Ajnas to download YouTube videos and automatically slice them into custom-length parts, chapters, or equal clips.
 
 ## ✨ Key Features
 
