@@ -11,10 +11,23 @@ try {
   staticFfmpegPath = require('ffmpeg-static');
 } catch (_) {}
 
-const YT_DLP_PATH = process.env.YT_DLP_PATH || 
-  (isWin && fs.existsSync(winBin) 
-    ? winBin 
-    : (fs.existsSync(linuxBin) ? linuxBin : 'yt-dlp'));
+function resolveYtDlp() {
+  if (process.env.YT_DLP_PATH && fs.existsSync(process.env.YT_DLP_PATH)) {
+    return process.env.YT_DLP_PATH;
+  }
+  if (isWin) {
+    if (fs.existsSync(winBin)) return winBin;
+    return 'yt-dlp.exe';
+  } else {
+    if (fs.existsSync(linuxBin)) {
+      try {
+        fs.chmodSync(linuxBin, 0o755);
+      } catch (_) {}
+      return linuxBin;
+    }
+    return 'yt-dlp';
+  }
+}
 
 const FFMPEG_DIR = process.env.FFMPEG_DIR || 
   (isWin && fs.existsSync(path.join(__dirname, '..', 'bin')) 
@@ -64,11 +77,8 @@ function getVideoInfo(url) {
       url.trim()
     ];
 
-    if (FFMPEG_DIR) {
-      args.splice(args.length - 1, 0, '--ffmpeg-location', FFMPEG_DIR);
-    }
-
-    const child = spawn(YT_DLP_PATH, args);
+    const executable = resolveYtDlp();
+    const child = spawn(executable, args);
     let stdoutData = '';
     let stderrData = '';
 
@@ -206,7 +216,8 @@ function downloadSource({ url, quality, outputPath, onProgress }) {
       );
     }
 
-    const child = spawn(YT_DLP_PATH, args);
+    const executable = resolveYtDlp();
+    const child = spawn(executable, args);
     let lastPercent = 0;
     let errorOutput = '';
 
