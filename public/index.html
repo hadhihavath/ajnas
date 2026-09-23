@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="theme-color" content="#07090e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Youtube Splitter — Custom made for Mr. Ajnas</title>
   <meta name="description" content="Youtube Splitter Custom made for Mr. Ajnas. Download YouTube videos split into custom duration chunks, equal parts, or trimmed segments.">
   <link rel="stylesheet" href="css/style.css">
@@ -12,12 +15,12 @@
     
     <!-- Hero Header -->
     <header class="app-header">
-      <div style="display: flex; justify-content: center; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
-        <div class="brand-badge" style="margin-bottom: 0;">
+      <div class="header-badges-row">
+        <div class="brand-badge">
           <span class="pulse-dot"></span>
           <span>High-Speed Video Slicer</span>
         </div>
-        <div class="brand-badge" style="margin-bottom: 0; background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.4); color: #c4b5fd;">
+        <div class="brand-badge brand-badge-custom">
           <span>✨ Custom made for Mr. Ajnas</span>
         </div>
         <button id="btnServerConfig" class="server-config-btn" type="button" title="Configure Hostinger Backend API URL">
@@ -39,26 +42,31 @@
     <!-- URL Input Section -->
     <section class="glass-panel search-card">
       <div class="input-group">
-        <div class="input-icon-wrapper">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-          </svg>
+        <div class="input-field-wrapper">
+          <div class="input-icon-wrapper">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+          </div>
+          <input 
+            type="url" 
+            id="youtubeUrl" 
+            class="url-input" 
+            placeholder="Paste YouTube link (auto-detects from clipboard)" 
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            inputmode="url"
+          >
+          <button id="btnPaste" class="paste-btn" type="button" title="Paste from clipboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            </svg>
+            <span>Paste</span>
+          </button>
         </div>
-        <input 
-          type="text" 
-          id="youtubeUrl" 
-          class="url-input" 
-          placeholder="Paste any YouTube video or Shorts link (e.g. https://www.youtube.com/watch?v=...)" 
-          autocomplete="off"
-          spellcheck="false"
-        >
-        <button id="btnPaste" class="paste-btn" type="button" title="Paste from clipboard">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-          </svg>
-          Paste
-        </button>
         <button id="btnFetchInfo" class="btn-fetch" type="button">
           <span class="btn-text">Inspect Video</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -69,10 +77,12 @@
 
       <!-- Quick sample test links -->
       <div class="quick-samples">
-        <span>Try sample:</span>
-        <button class="sample-chip" data-url="https://www.youtube.com/watch?v=jNQXAC9IVRw">Me at the zoo (19s Test)</button>
-        <button class="sample-chip" data-url="https://www.youtube.com/watch?v=aqz-KE-bpKQ">Big Buck Bunny (Short Film)</button>
-        <button class="sample-chip" data-url="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Rick Astley (Music)</button>
+        <span class="quick-samples-label">Try sample:</span>
+        <div class="samples-scroll-row">
+          <button class="sample-chip" data-url="https://www.youtube.com/watch?v=jNQXAC9IVRw">Me at the zoo (19s)</button>
+          <button class="sample-chip" data-url="https://www.youtube.com/watch?v=aqz-KE-bpKQ">Big Buck Bunny (Short Film)</button>
+          <button class="sample-chip" data-url="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Rick Astley (Music)</button>
+        </div>
       </div>
     </section>
 
@@ -148,22 +158,24 @@
       <div id="tabContentDuration" class="tab-content">
         <!-- Quick Presets -->
         <div class="preset-durations">
-          <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Presets:</span>
-          <button type="button" class="preset-chip" data-seconds="30">30s (Shorts/Reels)</button>
-          <button type="button" class="preset-chip active" data-seconds="60">60s (1 min)</button>
-          <button type="button" class="preset-chip" data-seconds="120">2 mins</button>
-          <button type="button" class="preset-chip" data-seconds="300">5 mins</button>
-          <button type="button" class="preset-chip" data-seconds="600">10 mins</button>
+          <span class="preset-label">Presets:</span>
+          <div class="presets-scroll-row">
+            <button type="button" class="preset-chip" data-seconds="30">30s (Shorts/Reels)</button>
+            <button type="button" class="preset-chip active" data-seconds="60">60s (1 min)</button>
+            <button type="button" class="preset-chip" data-seconds="120">2 mins</button>
+            <button type="button" class="preset-chip" data-seconds="300">5 mins</button>
+            <button type="button" class="preset-chip" data-seconds="600">10 mins</button>
+          </div>
         </div>
 
         <div class="split-input-row">
           <div class="input-field-group">
             <label for="splitMinutes">Part Length - Minutes</label>
-            <input type="number" id="splitMinutes" class="styled-number-input" min="0" max="600" value="1">
+            <input type="number" id="splitMinutes" class="styled-number-input" min="0" max="600" value="1" inputmode="numeric" pattern="[0-9]*">
           </div>
           <div class="input-field-group">
             <label for="splitSeconds">Part Length - Seconds</label>
-            <input type="number" id="splitSeconds" class="styled-number-input" min="0" max="59" value="0">
+            <input type="number" id="splitSeconds" class="styled-number-input" min="0" max="59" value="0" inputmode="numeric" pattern="[0-9]*">
           </div>
         </div>
       </div>
@@ -173,7 +185,7 @@
         <div class="split-input-row">
           <div class="input-field-group">
             <label for="numPartsInput">Divide into how many equal parts?</label>
-            <input type="number" id="numPartsInput" class="styled-number-input" min="2" max="50" value="3">
+            <input type="number" id="numPartsInput" class="styled-number-input" min="2" max="50" value="3" inputmode="numeric" pattern="[0-9]*">
           </div>
         </div>
       </div>

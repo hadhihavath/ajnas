@@ -474,6 +474,62 @@ function closePreviewModal() {
   el.previewModal.classList.remove('active');
 }
 
+// YouTube URL Detection Regex & Extraction
+function extractYouTubeUrl(rawText) {
+  if (!rawText || typeof rawText !== 'string') return null;
+  const text = rawText.trim();
+  // Matches standard, short, shorts, mobile, music, and embed YouTube URLs
+  const ytRegex = /(?:https?:\/\/)?(?:www\.|m\.|music\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i;
+  const match = text.match(ytRegex);
+  if (match) {
+    let url = text;
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'https://' + url;
+    }
+    return url;
+  }
+  return null;
+}
+
+// Auto-Load Clipboard Helper
+let lastClipboardCheckedUrl = '';
+let isCheckingClipboard = false;
+
+async function checkAndAutoLoadClipboard(autoInspect = true) {
+  if (!navigator.clipboard || !navigator.clipboard.readText) {
+    return;
+  }
+  if (isCheckingClipboard) return;
+  isCheckingClipboard = true;
+
+  try {
+    const clipText = await navigator.clipboard.readText();
+    const ytUrl = extractYouTubeUrl(clipText);
+
+    if (ytUrl) {
+      const currentInputVal = el.youtubeUrl ? el.youtubeUrl.value.trim() : '';
+      const currentLoadedUrl = state.video ? state.video.url : '';
+
+      // Only load if it's new or not currently loaded
+      if (ytUrl !== lastClipboardCheckedUrl && ytUrl !== currentLoadedUrl) {
+        lastClipboardCheckedUrl = ytUrl;
+        if (el.youtubeUrl) {
+          el.youtubeUrl.value = ytUrl;
+        }
+        showToast('📋 YouTube video link auto-loaded from clipboard!', 'success');
+
+        if (autoInspect) {
+          fetchVideoInfo(ytUrl);
+        }
+      }
+    }
+  } catch (err) {
+    // Silent catch: clipboard permissions may be pending or restricted without explicit user gesture
+  } finally {
+    isCheckingClipboard = false;
+  }
+}
+
 // Setup Event Listeners
 function initEvents() {
   // Inspect button
@@ -486,19 +542,57 @@ function initEvents() {
     }
   });
 
-  // Paste button
+  // Paste button (manual trigger)
   el.btnPaste.addEventListener('click', async () => {
     try {
       const text = await navigator.clipboard.readText();
-      if (text) {
-        el.youtubeUrl.value = text.trim();
-        fetchVideoInfo(text.trim());
+      const ytUrl = extractYouTubeUrl(text) || (text ? text.trim() : '');
+      if (ytUrl) {
+        el.youtubeUrl.value = ytUrl;
+        lastClipboardCheckedUrl = ytUrl;
+        showToast('📋 Link pasted from clipboard', 'info');
+        fetchVideoInfo(ytUrl);
+      } else {
+        showToast('Clipboard is empty or no valid YouTube link found.', 'info');
+        el.youtubeUrl.focus();
       }
     } catch (err) {
       showToast('Clipboard access denied. Please paste manually.', 'info');
       el.youtubeUrl.focus();
     }
   });
+
+  // Auto-detect YouTube links when returning to tab or window
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      checkAndAutoLoadClipboard(true);
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    checkAndAutoLoadClipboard(true);
+  });
+
+  // Mobile / desktop user interaction fallback (handles gesture-gated clipboard permissions)
+  const onFirstInteraction = () => {
+    if (!state.video && (!el.youtubeUrl.value || !el.youtubeUrl.value.trim())) {
+      checkAndAutoLoadClipboard(true);
+    }
+    document.removeEventListener('pointerdown', onFirstInteraction);
+  };
+  document.addEventListener('pointerdown', onFirstInteraction, { passive: true });
+
+  // Focus on URL input: auto-check clipboard if empty
+  el.youtubeUrl.addEventListener('focus', () => {
+    if (!el.youtubeUrl.value.trim()) {
+      checkAndAutoLoadClipboard(true);
+    }
+  });
+
+  // Initial check shortly after load
+  setTimeout(() => {
+    checkAndAutoLoadClipboard(true);
+  }, 600);
 
   // Sample Chips
   el.sampleChips.forEach((chip) => {
