@@ -73,8 +73,15 @@ const el = {
 
   cookieStatusBadge: document.getElementById('cookieStatusBadge'),
   cookieTextInput: document.getElementById('cookieTextInput'),
+  btnUploadCookieFile: document.getElementById('btnUploadCookieFile'),
+  cookieFileInput: document.getElementById('cookieFileInput'),
   btnSaveCookies: document.getElementById('btnSaveCookies'),
   btnClearCookies: document.getElementById('btnClearCookies'),
+
+  proxyStatusBadge: document.getElementById('proxyStatusBadge'),
+  proxyUrlInput: document.getElementById('proxyUrlInput'),
+  btnSaveProxy: document.getElementById('btnSaveProxy'),
+  btnClearProxy: document.getElementById('btnClearProxy'),
 
   toastContainer: document.getElementById('toastContainer'),
 };
@@ -176,6 +183,10 @@ function renderVideoInfo(video) {
   el.videoTitle.textContent = video.title;
   el.videoAuthor.textContent = video.author;
   el.videoLengthText.textContent = `${video.formattedDuration} total`;
+
+  if (video.isOEmbedFallback) {
+    showToast('💡 Video inspected via YouTube public API. Save your cookies or a proxy in Settings if server download is blocked.', 'info');
+  }
 
   // Render Quality Pills
   el.qualityPills.innerHTML = '';
@@ -708,6 +719,7 @@ function initEvents() {
       el.backendUrlInput.value = window.CONFIG ? window.CONFIG.API_BASE_URL : '';
       el.serverModal.classList.add('active');
       checkCookieStatus();
+      checkProxyStatus();
     });
   }
 
@@ -744,8 +756,117 @@ function initEvents() {
       el.backendUrlInput.value = '';
       updateServerBadge();
       checkCookieStatus();
+      checkProxyStatus();
       el.serverModal.classList.remove('active');
       showToast('Backend reset to default origin', 'info');
+    });
+  }
+
+  // Cookie File Picker (1-click upload)
+  if (el.btnUploadCookieFile && el.cookieFileInput) {
+    el.btnUploadCookieFile.addEventListener('click', () => {
+      el.cookieFileInput.click();
+    });
+
+    el.cookieFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const text = event.target.result;
+        if (!text || !text.trim()) {
+          showToast('Selected file is empty.', 'error');
+          return;
+        }
+
+        try {
+          const url = window.CONFIG ? window.CONFIG.getUrl('/api/cookies') : '/api/cookies';
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cookies: text })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(`✅ "${file.name}" uploaded & activated!`, 'success');
+            checkCookieStatus();
+          } else {
+            showToast(data.error || 'Failed to upload cookies file.', 'error');
+          }
+        } catch (err) {
+          showToast('Failed to upload cookies file: ' + err.message, 'error');
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  // Proxy Status & Management
+  async function checkProxyStatus() {
+    if (!el.proxyStatusBadge) return;
+    try {
+      const url = window.CONFIG ? window.CONFIG.getUrl('/api/proxy/status') : '/api/proxy/status';
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.hasProxy) {
+        el.proxyStatusBadge.textContent = '🛡️ Proxy Active';
+        el.proxyStatusBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+        el.proxyStatusBadge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        el.proxyStatusBadge.style.color = '#6ee7b7';
+        if (el.proxyUrlInput && data.proxy) {
+          el.proxyUrlInput.value = data.proxy;
+        }
+      } else {
+        el.proxyStatusBadge.textContent = 'Direct VPS IP';
+        el.proxyStatusBadge.style.background = 'rgba(255, 255, 255, 0.06)';
+        el.proxyStatusBadge.style.borderColor = 'var(--border-subtle)';
+        el.proxyStatusBadge.style.color = 'var(--text-muted)';
+        if (el.proxyUrlInput) el.proxyUrlInput.value = '';
+      }
+    } catch (_) {
+      el.proxyStatusBadge.textContent = 'Status Unavailable';
+    }
+  }
+
+  if (el.btnSaveProxy) {
+    el.btnSaveProxy.addEventListener('click', async () => {
+      const proxy = el.proxyUrlInput.value.trim();
+      if (!proxy) {
+        showToast('Please enter a proxy URL first.', 'error');
+        return;
+      }
+      try {
+        const url = window.CONFIG ? window.CONFIG.getUrl('/api/proxy') : '/api/proxy';
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ proxy })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('✅ Proxy configured on server!', 'success');
+          checkProxyStatus();
+        } else {
+          showToast(data.error || 'Failed to save proxy.', 'error');
+        }
+      } catch (err) {
+        showToast('Failed to save proxy: ' + err.message, 'error');
+      }
+    });
+  }
+
+  if (el.btnClearProxy) {
+    el.btnClearProxy.addEventListener('click', async () => {
+      try {
+        const url = window.CONFIG ? window.CONFIG.getUrl('/api/proxy') : '/api/proxy';
+        const res = await fetch(url, { method: 'DELETE' });
+        const data = await res.json();
+        showToast('Proxy removed from server.', 'info');
+        checkProxyStatus();
+      } catch (err) {
+        showToast('Failed to remove proxy: ' + err.message, 'error');
+      }
     });
   }
 
@@ -753,7 +874,7 @@ function initEvents() {
     el.btnSaveCookies.addEventListener('click', async () => {
       const text = el.cookieTextInput.value.trim();
       if (!text) {
-        showToast('Please paste cookies content first.', 'error');
+        showToast('Please paste cookies content or choose a file first.', 'error');
         return;
       }
       try {

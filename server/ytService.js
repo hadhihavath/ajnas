@@ -59,6 +59,26 @@ function getCookieFilePath() {
   return null;
 }
 
+function getProxyUrl() {
+  if (process.env.PROXY_URL && process.env.PROXY_URL.trim()) {
+    return process.env.PROXY_URL.trim();
+  }
+  if (process.env.HTTP_PROXY && process.env.HTTP_PROXY.trim()) {
+    return process.env.HTTP_PROXY.trim();
+  }
+  if (process.env.HTTPS_PROXY && process.env.HTTPS_PROXY.trim()) {
+    return process.env.HTTPS_PROXY.trim();
+  }
+  const rootProxy = path.join(__dirname, '..', 'proxy.txt');
+  if (fs.existsSync(rootProxy)) {
+    try {
+      const val = fs.readFileSync(rootProxy, 'utf8').trim();
+      if (val) return val;
+    } catch (_) {}
+  }
+  return null;
+}
+
 function getYtDlpBaseArgs() {
   const base = [
     '--no-warnings',
@@ -73,6 +93,11 @@ function getYtDlpBaseArgs() {
     base.push('--cookies', cookiePath);
   }
 
+  const proxyUrl = getProxyUrl();
+  if (proxyUrl) {
+    base.push('--proxy', proxyUrl);
+  }
+
   return base;
 }
 
@@ -80,9 +105,42 @@ function cleanYtDlpError(errOutput) {
   if (!errOutput) return 'Failed to process video with YouTube.';
   const str = String(errOutput);
   if (str.includes("Sign in to confirm you’re not a bot") || str.includes("Sign in to confirm you're not a bot")) {
-    return "YouTube Bot Verification: YouTube requires authentication for this video from the server IP. Please upload or paste a cookies.txt file in Server Settings (or check our guide in Settings).";
+    return "YouTube Bot Verification: YouTube requires authentication for this video from the server IP. Please upload a cookies.txt file or configure a proxy in Server Settings.";
   }
   return str;
+}
+
+/**
+ * YouTube public oEmbed fallback for metadata inspection
+ */
+async function getOEmbedFallback(rawUrl) {
+  try {
+    const cleanUrl = rawUrl.trim();
+    const match = cleanUrl.match(/(?:watch\?v=|shorts\/|embed\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    const videoId = match ? match[1] : '';
+    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(cleanUrl)}&format=json`;
+    const res = await fetch(oembedUrl);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      id: videoId,
+      title: data.title || 'YouTube Video',
+      author: data.author_name || 'YouTube Creator',
+      duration: 60,
+      formattedDuration: '01:00 (Estimated)',
+      thumbnail: data.thumbnail_url || (videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : ''),
+      url: cleanUrl,
+      qualities: [
+        { id: '720p', label: '720p (HD)', height: 720 },
+        { id: '480p', label: '480p (SD)', height: 480 },
+        { id: '360p', label: '360p (SD)', height: 360 },
+        { id: 'audio', label: 'Audio Only (MP3)', height: 0 }
+      ],
+      isOEmbedFallback: true
+    };
+  } catch (_) {
+    return null;
+  }
 }
 
 /**
@@ -146,7 +204,7 @@ function getVideoInfo(url) {
         stderrData += chunk.toString();
       });
 
-      child.on('close', (code) => {
+      child.on('close', async (code) => {
         if (code !== 0) {
           // Check for shared library / mmap / noexec errors on Linux
           if (allowFallback && (stderrData.includes('failed to map segment') || stderrData.includes('libz.so') || code === 126 || code === 127)) {
@@ -155,6 +213,16 @@ function getVideoInfo(url) {
               return tryExtract('python3', [pyBin, ...args], false);
             }
           }
+
+          // If blocked by YouTube Bot Check and no cookies/proxy, try oEmbed fallback for metadata inspection
+          if (stderrData.includes("Sign in to confirm you’re not a bot") || stderrData.includes("Sign in to confirm you're not a bot")) {
+            console.warn('[ytService] YouTube bot check detected on inspection. Attempting oEmbed fallback...');
+            const fallbackInfo = await getOEmbedFallback(url);
+            if (fallbackInfo) {
+              return resolve(fallbackInfo);
+            }
+          }
+
           console.error('[yt-dlp error]', stderrData);
           return reject(new Error(cleanYtDlpError(stderrData)));
         }
@@ -393,5 +461,6 @@ module.exports = {
   formatDuration,
   getVideoInfo,
   downloadSource,
-  getCookieFilePath
+  getCookieFilePath,
+  getProxyUrl
 };

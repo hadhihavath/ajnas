@@ -290,46 +290,83 @@
 
   <!-- Backend Server Settings Modal (for hadhihavath.github.io) -->
   <div id="serverModal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 520px; padding: 24px;">
+    <div class="modal-content" style="max-width: 540px; padding: 24px; max-height: 88vh; overflow-y: auto;">
       <div class="modal-header" style="padding: 0 0 16px; border-bottom: 1px solid var(--border-subtle);">
-        <h3 class="modal-title">Hostinger Server Connection</h3>
+        <h3 class="modal-title">Server Settings & Authentication</h3>
         <button id="btnServerModalClose" class="modal-close-btn" type="button">&times;</button>
       </div>
       <div style="margin-top: 18px;">
         <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px;">
-          When using <strong>hadhihavath.github.io</strong>, requests are routed to your Hostinger VPS backend running Docker / Node.js.
+          Configure your Hostinger backend connection and authentication to bypass YouTube's datacenter bot checks.
         </p>
+
+        <!-- Backend URL -->
         <label for="backendUrlInput" style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Hostinger Backend URL</label>
         <input 
           type="text" 
           id="backendUrlInput" 
           class="styled-number-input" 
-          style="width: 100%; margin-top: 6px; margin-bottom: 16px; font-size: 0.92rem;" 
-          placeholder="e.g. http://123.45.67.89:3000 or https://api.yourdomain.com"
+          style="width: 100%; margin-top: 6px; margin-bottom: 12px; font-size: 0.92rem;" 
+          placeholder="e.g. https://ajnas.faredix.com"
         >
-        <div style="display: flex; gap: 10px; justify-content: flex-end;">
-          <button id="btnResetServerUrl" type="button" class="btn-part-preview">Reset Local</button>
-          <button id="btnSaveServerUrl" type="button" class="btn-part-download" style="padding: 10px 20px;">Save & Connect</button>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-bottom: 20px;">
+          <button id="btnResetServerUrl" type="button" class="btn-part-preview">Reset Default</button>
+          <button id="btnSaveServerUrl" type="button" class="btn-part-download" style="padding: 10px 18px;">Save & Connect</button>
         </div>
 
-        <!-- YouTube Cookies & Bot Check Bypass -->
-        <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-subtle);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label for="cookieTextInput" style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">YouTube Cookies (Bot-Check Bypass)</label>
+        <!-- Option A: YouTube Cookies -->
+        <div style="padding-top: 18px; border-top: 1px solid var(--border-subtle); margin-bottom: 22px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+            <label style="font-size: 0.82rem; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.04em;">Option 1: YouTube Cookies (1-Click Upload)</label>
             <span id="cookieStatusBadge" class="brand-badge" style="margin-bottom: 0; padding: 2px 10px; font-size: 0.72rem;">Checking...</span>
           </div>
-          <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 10px;">
-            Mobile player clients are active by default. If a video ever prompts <em>"Sign in to confirm you’re not a bot"</em>, paste your Netscape <code>cookies.txt</code> below:
+          <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 10px;">
+            Export cookies from your signed-in YouTube browser and upload or paste below. Once saved on the server, all video downloads work for everyone!
           </p>
+
+          <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap;">
+            <input type="file" id="cookieFileInput" accept=".txt" style="display: none;">
+            <button id="btnUploadCookieFile" type="button" class="btn-part-preview" style="font-size: 0.82rem; padding: 8px 14px; background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.35); color: #c4b5fd;">
+              📁 Choose cookies.txt File
+            </button>
+            <span style="font-size: 0.78rem; color: var(--text-dim);">or paste text below:</span>
+          </div>
+
           <textarea 
             id="cookieTextInput" 
             class="styled-number-input" 
-            style="width: 100%; height: 90px; font-family: monospace; font-size: 0.76rem; resize: vertical; margin-bottom: 10px;"
+            style="width: 100%; height: 80px; font-family: monospace; font-size: 0.76rem; resize: vertical; margin-bottom: 8px;"
             placeholder="# Netscape HTTP Cookie File&#10;.youtube.com   TRUE   /   FALSE   1750000000   ..."
           ></textarea>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px; flex-wrap: wrap; gap: 6px;">
+            <span>Get extension: <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank" rel="noopener" style="color: var(--accent-cyan); text-decoration: underline;">Chrome</a> | <a href="https://addons.mozilla.org/en-US/firefox/addon/get-cookies-txt-locally/" target="_blank" rel="noopener" style="color: var(--accent-cyan); text-decoration: underline;">Firefox</a></span>
+            <div style="display: flex; gap: 8px;">
+              <button id="btnClearCookies" type="button" class="btn-part-preview" style="font-size: 0.78rem; padding: 6px 12px;">Clear Cookies</button>
+              <button id="btnSaveCookies" type="button" class="btn-part-download" style="font-size: 0.78rem; padding: 6px 14px;">Save Cookies</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Option B: Custom Proxy -->
+        <div style="padding-top: 18px; border-top: 1px solid var(--border-subtle);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+            <label for="proxyUrlInput" style="font-size: 0.82rem; font-weight: 700; color: #6ee7b7; text-transform: uppercase; letter-spacing: 0.04em;">Option 2: Custom Proxy (No Account Needed)</label>
+            <span id="proxyStatusBadge" class="brand-badge" style="margin-bottom: 0; padding: 2px 10px; font-size: 0.72rem;">Checking...</span>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 10px;">
+            Don't want to log in with a Google account? Route server requests through a residential or custom HTTP/SOCKS5 proxy:
+          </p>
+          <input 
+            type="text" 
+            id="proxyUrlInput" 
+            class="styled-number-input" 
+            style="width: 100%; font-size: 0.88rem; margin-bottom: 10px;"
+            placeholder="e.g. http://username:password@ip:port or socks5://ip:port"
+          >
           <div style="display: flex; gap: 8px; justify-content: flex-end;">
-            <button id="btnClearCookies" type="button" class="btn-part-preview" style="font-size: 0.8rem; padding: 8px 14px;">Clear Cookies</button>
-            <button id="btnSaveCookies" type="button" class="btn-part-download" style="font-size: 0.8rem; padding: 8px 16px;">Save Cookies to Server</button>
+            <button id="btnClearProxy" type="button" class="btn-part-preview" style="font-size: 0.78rem; padding: 6px 12px;">Clear Proxy</button>
+            <button id="btnSaveProxy" type="button" class="btn-part-download" style="font-size: 0.78rem; padding: 6px 14px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Save Proxy</button>
           </div>
         </div>
       </div>

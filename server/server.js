@@ -454,6 +454,44 @@ app.delete('/api/cookies', (req, res) => {
   }
 });
 
+/**
+ * Proxy Management (Alternative to cookies for bypassing bot checks)
+ */
+app.get('/api/proxy/status', (req, res) => {
+  const proxy = ytService.getProxyUrl();
+  res.json({
+    success: true,
+    hasProxy: !!proxy,
+    proxy: proxy ? proxy.replace(/:[^:@]+@/, ':****@') : null // mask password for privacy
+  });
+});
+
+app.post('/api/proxy', (req, res) => {
+  try {
+    const { proxy } = req.body;
+    if (!proxy || typeof proxy !== 'string' || !proxy.trim()) {
+      return res.status(400).json({ success: false, error: 'Proxy URL cannot be empty.' });
+    }
+    const targetPath = path.join(__dirname, '..', 'proxy.txt');
+    fs.writeFileSync(targetPath, proxy.trim(), 'utf8');
+    res.json({ success: true, message: 'Proxy successfully saved.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to save proxy: ' + err.message });
+  }
+});
+
+app.delete('/api/proxy', (req, res) => {
+  try {
+    const rootProxy = path.join(__dirname, '..', 'proxy.txt');
+    if (fs.existsSync(rootProxy)) {
+      fs.unlinkSync(rootProxy);
+    }
+    res.json({ success: true, message: 'Proxy removed from server.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Start Express Server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n======================================================`);
